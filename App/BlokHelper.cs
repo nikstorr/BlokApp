@@ -2,6 +2,7 @@
 
 namespace App;
 
+[Obsolete("This class is obsolete and will be removed. The Handler class is the bees knees from here on")]
 public class BlokHelper
 {
     /*
