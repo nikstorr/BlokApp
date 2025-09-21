@@ -16,9 +16,9 @@ namespace App
         DataTable _holdTable = new();
         DataTable _blokkeTable = new();
         // resulting Activities as domain objects, before converting into DataTable
-        readonly List<Activity> _activities = new();
+        readonly List<Activity> _activities = [];
 
-        readonly ActivityCreator _activityCreator = null;
+        readonly ActivityCreator _activityCreator;
 
         public Handler()
         {
@@ -28,7 +28,7 @@ namespace App
         }
 
         /// <summary>
-        /// Entry point to handle activities.
+        /// Entry point.
         /// </summary>
         public void HandleBlocks()
         {
@@ -41,6 +41,7 @@ namespace App
                     _activities.Add(act);
             }
 
+            // convert from domain objects to DataTable for easy saving to Excel
             ConvertToDataTable();
         }
 
@@ -50,7 +51,7 @@ namespace App
             // Don't fetch it in the ctor. Somehow that breaks the ExcelReader.
             _holdTable = _tableSet.Tables[Constants.HOLD_idx];
             // Fetch the BLOKKE table (6th table, index 5) from the _tableSet
-            // Don't fetch it in the ctor. That messes with the Excel data reader somehow.
+            // Don't fetch it in the ctor. That messes with the Excel data reader, somehow.
             _blokkeTable = _tableSet.Tables[Constants.BLOKKE_idx];
         }
 
@@ -77,6 +78,9 @@ namespace App
         /// </summary>
         private List<Block> CreateActivityBlocks(IEnumerable<DataRow> rows)
         {
+            // TODO : This can probably be done more elegantly with LINQ GroupBy, or some such.
+            // either way, this method is too long and should be refactored.
+
             var blocks = new List<Block>();
             Block currentBlock = null;
             (string kla, string blok) lastKey = (null, null);

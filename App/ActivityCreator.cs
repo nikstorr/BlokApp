@@ -1,6 +1,9 @@
 ﻿using App.Domain;
 using System;
 using System.Data;
+using System.Diagnostics.Metrics;
+using System.Drawing;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace App
 {
@@ -91,11 +94,11 @@ namespace App
 
         /// <summary>
         /// Find the largest block possible.
-        /// Start by trying the largest possible block at startCol and works backwards, returning immediately when a valid block is found.
+        /// Start by trying the largest possible block at startCol and work backwards, returning immediately when a valid block is found.
         /// It is more efficient in cases where the largest block is likely, as it avoids unnecessary smaller block checks.
         /// 
-        ///  (posValues are POS field values for all rows in a block.
-        ///  startCol is the index of the first column to investigate)
+        /// posValues are POS field values for all rows in a block.
+        /// startCol is the index of the first column to investigate.
         /// </summary>
         private int FindLargestMatchingBlock(List<List<string>> posValues, int startCol)
         {
@@ -111,7 +114,7 @@ namespace App
 
         /// <summary>
         /// Determine whether, for a given block of POS columns (starting at startCol and spanning blockLen columns), 
-        /// each row in the group has matching values/non-values across those columns.
+        /// each row in the Block has matching values/non-values across those columns.
         /// </summary>
         private static bool ColumnsMatch(List<List<string>> posValues, int startCol, int blockLen)
         {
@@ -136,10 +139,11 @@ namespace App
 
         /// <summary>
         /// Check if all values in the specified block of columns are empty or whitespace.
-        /// TODO remove this method. It will never be the case since input data have been sanitized
         /// </summary>
         private bool IsBlockAllEmpty(List<List<string>> posValues, int startCol, int blockLen)
         {
+            // TODO  remove calls to this method. It will never be true since input data have been sanitized!
+            // TODO  remove this method. It will never be true since input data have been sanitized!
             for (int c = startCol; c < startCol + blockLen; c++)
             {
                 for (int r = 0; r < posValues.Count; r++)
@@ -171,6 +175,7 @@ namespace App
         /// <summary>
         private bool IsColumnAllEmpty(List<List<string>> posValues, int col)
         {
+            // TODO check if the method above can be used instead of this one. It seems to do the same thing. 
             for (int r = 0; r < posValues.Count; r++)
             {
                 if (!string.IsNullOrWhiteSpace(posValues[r][col]))
@@ -279,8 +284,9 @@ namespace App
 
         /// <summary>
         /// each time an activity is created, the HOLD table must be updated:
-        ///     HOLD.POS must be decremented by 1 for the row where HOLD.KLA matches the group's KLA and HOLD.AKT matches the POS value 
-        ///     of the BLOK (that indicates the start of the activity).
+        ///     HOLD.POS must be decremented by 1 for the row where: 
+        ///         (HOLD.KLA matches the group's KLA and HOLD.AKT matches the POS value 
+        ///             of the BLOK (that indicates the start of the activity).
         /// </summary>
         private void UpdateHold(string kla, string aktValue)
         {
@@ -315,6 +321,9 @@ namespace App
             //}
         }
 
+        /// <summary>
+        /// check whether the POS field in the _hold DataTable is zero for a specific row identified by KLA and AKT values
+        /// </summary>
         private bool IsHoldPosZero(string kla, string aktValue)
         {
             for (int i = 0; i < _hold.Rows.Count; i++)

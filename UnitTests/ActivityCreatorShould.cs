@@ -69,6 +69,7 @@ public class ActivityCreatorShould
             ("", "", "", new[] { "da", "da", "da", "", "", "", "", "" })
         );
 
+        Assert.Equal(2, holdTable.Rows[0]["POS"]);
         var activities = creator.CreateActivitiesFromBlock(block);
 
         Assert.Single(activities);
@@ -81,12 +82,11 @@ public class ActivityCreatorShould
     }
 
     [Fact]
-    public void Should_Create_3_Activities()
+    public void Should_Create_3_Single_Column_Activities()
     {
         var holdTable = CreateHoldTable();
         var creator = new ActivityCreator(holdTable);
 
-        // No blocks? Or 3 single lesson blocks?
         var block = CreateBlock(
             ("1b", "BLAK3", "111", new[] { ""  , "ty", "ty", "", "", "", "", "" }),
             (""  , ""     , ""   , new[] { "da", "it", "eø", "", "", "", "", "" })
