@@ -12,7 +12,7 @@ namespace UnitTests
         {
             var sut = new Handler();
 
-            sut.HandleActivities();
+            sut.HandleBlocks();
             var activities = sut.Result;
             var data = Data();
 

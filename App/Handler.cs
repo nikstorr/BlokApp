@@ -7,8 +7,6 @@ namespace App
     public class Handler
     {
         readonly string _path = "../../../../Files/Nikolai-Arbejdsopgave_2.xlsx";
-        // Helper for block processing
-        readonly BlokHelper _blockHelper = new();
         // all tables in the excel input file
         readonly DataSet _tableSet = new();
         // The resulting activities as a DataTable ready to write as a new excel spreadsheet
@@ -17,40 +15,38 @@ namespace App
         // HOLD and BLOKKE tables
         DataTable _holdTable = new();
         DataTable _blokkeTable = new();
-
-        // A dictionary of HOLD as:  (KLA+FAG, POS)
-        readonly List< (string, string, int)> _HOLD_POS = [];
-
+        // resulting Activities as domain objects, before converting into DataTable
         readonly List<Activity> _activities = new();
 
         readonly ActivityCreator _activityCreator = null;
 
-
         public Handler()
         {
             _tableSet = new ExcelReader().ReadExcelFile(_path);
-
+            // TODO check if it is an anti-pattern (to use the HOLD table here in the ctor, before it is assigned anything.
             _activityCreator =  new ActivityCreator(_holdTable);
         }
-        public void HandleActivities()
+
+        /// <summary>
+        /// Entry point to handle activities.
+        /// </summary>
+        public void HandleBlocks()
         {
             PopulateTables();
 
             foreach (var block in GetBlocksToProcess(_blokkeTable))
             {
-                if (_blockHelper.BlockHasActivity(block))
-                {
-                    var activities = _activityCreator.CreateActivitiesFromBlock(block);
-                    foreach(var act in activities)
-                        _activities.Add(act);
-                }
+                var activities = _activityCreator.CreateActivitiesFromBlock(block);
+                foreach(var act in activities)
+                    _activities.Add(act);
             }
+
             ConvertToDataTable();
         }
 
         private void PopulateTables()
         {
-            // Fetch the HOLD table (5th table, index 4) from the DataSet, here.
+            // Fetch the HOLD table (5th table, index 4) from the DataSet, here!
             // Don't fetch it in the ctor. Somehow that breaks the ExcelReader.
             _holdTable = _tableSet.Tables[Constants.HOLD_idx];
             // Fetch the BLOKKE table (6th table, index 5) from the _tableSet
@@ -64,25 +60,6 @@ namespace App
             return CreateActivityBlocks(filteredRows);
         }
 
-
-        private void FilterHold()
-        {
-
-            // fetch only rows where KLA has a value. 
-            var hold = _holdTable.Rows.Cast<DataRow>()
-                .Where(row => !string.IsNullOrWhiteSpace(row.Field<string>(0)))
-                .Skip(1); // skip the Column-name row, row 1.
-
-            foreach (DataRow row in hold)
-            {
-                var klasse = row.Field<string>(0);
-                var aktivitet = row.Field<string>(1);
-                var positioner = (int)row.Field<double>(3);
-
-                _HOLD_POS.Add((klasse, aktivitet, positioner));
-            }
-        }
-
         private static IEnumerable<DataRow> RemoveEmptyRows(DataTable blokkeTable)
         {
             return blokkeTable.Rows.Cast<DataRow>().Skip(2)
@@ -94,10 +71,14 @@ namespace App
                 );
         }
 
+        /// <summary>
+        ///  Group a sequence of DataRow objects (from the BLOKKE table) into logical blocks, each represented by a Block object. 
+        ///  Each block corresponds to a set of rows that share the same (KLA, BLOK) key
+        /// </summary>
         private List<Block> CreateActivityBlocks(IEnumerable<DataRow> rows)
         {
-            var groups = new List<Block>();
-            Block currentGroup = null;
+            var blocks = new List<Block>();
+            Block currentBlock = null;
             (string kla, string blok) lastKey = (null, null);
 
             foreach (var row in rows)
@@ -109,40 +90,43 @@ namespace App
                 // If KLA is empty, add row to current group (if any), or create a new group if none exists
                 if (string.IsNullOrWhiteSpace(kla))
                 {
-                    if (currentGroup == null)
+                    if (currentBlock == null)
                     {
-                        currentGroup = new Block { Key = key, Rows = new List<DataRow>() };
+                        currentBlock = new Block { Key = key, Rows = new List<DataRow>() };
                         lastKey = key;
                     }
-                    currentGroup.Rows.Add(row);
+                    currentBlock.Rows.Add(row);
                     continue;
                 }
 
                 if (lastKey.kla == null && lastKey.blok == null)
                 {
-                    currentGroup = new Block { Key = key, Rows = new List<DataRow>() };
-                    currentGroup.Rows.Add(row);
+                    currentBlock = new Block { Key = key, Rows = new List<DataRow>() };
+                    currentBlock.Rows.Add(row);
                     lastKey = key;
                 }
                 else if (key == lastKey)
                 {
-                    currentGroup.Rows.Add(row);
+                    currentBlock.Rows.Add(row);
                 }
                 else
                 {
-                    if (currentGroup != null && currentGroup.Rows.Count > 0)
-                        groups.Add(currentGroup);
-                    currentGroup = new Block { Key = key, Rows = new List<DataRow>() };
-                    currentGroup.Rows.Add(row);
+                    if (currentBlock != null && currentBlock.Rows.Count > 0)
+                        blocks.Add(currentBlock);
+                    currentBlock = new Block { Key = key, Rows = new List<DataRow>() };
+                    currentBlock.Rows.Add(row);
                     lastKey = key;
                 }
             }
-            if (currentGroup != null && currentGroup.Rows.Count > 0)
-                groups.Add(currentGroup);
+            if (currentBlock != null && currentBlock.Rows.Count > 0)
+                blocks.Add(currentBlock);
 
-            return groups;
+            return blocks;
         }
 
+        /// <summary>
+        /// Convert from domain object to DataTable for easy saving to Excel.
+        /// </summary>
         public void ConvertToDataTable()
         {
             DataTable dt = new();

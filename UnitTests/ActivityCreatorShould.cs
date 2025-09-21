@@ -5,6 +5,9 @@ using App.Domain;
 
 public class ActivityCreatorShould
 {
+    // Note there will never be a block with no activities in it,
+    // as those blocks are filtered out before calling ActivityCreator
+
     private DataTable CreateHoldTable()
     {
         var table = new DataTable();
@@ -30,6 +33,9 @@ public class ActivityCreatorShould
         table.Columns.Add("POS3", typeof(string));
         table.Columns.Add("POS4", typeof(string));
         table.Columns.Add("POS5", typeof(string));
+        table.Columns.Add("POS6", typeof(string));
+        table.Columns.Add("POS7", typeof(string));
+        table.Columns.Add("POS8", typeof(string));
 
         var dataRows = new List<DataRow>();
         foreach (var row in rows)
@@ -43,6 +49,9 @@ public class ActivityCreatorShould
             dr["POS3"] = row.pos.Length > 2 ? row.pos[2] : "";
             dr["POS4"] = row.pos.Length > 3 ? row.pos[3] : "";
             dr["POS5"] = row.pos.Length > 4 ? row.pos[4] : "";
+            dr["POS6"] = row.pos.Length > 5 ? row.pos[5] : "";
+            dr["POS7"] = row.pos.Length > 6 ? row.pos[6] : "";
+            dr["POS8"] = row.pos.Length > 7 ? row.pos[7] : "";
             dataRows.Add(dr);
         }
         return new Block { Key = (rows[0].kla, rows[0].blok), Rows = dataRows };
@@ -56,8 +65,8 @@ public class ActivityCreatorShould
 
         // Group with two rows, POS1-POS3 all match per row
         var block = CreateBlock(
-            ("1a", "1abS", "111", new[] { "ty", "ty", "ty", "", "" }),
-            ("", "", "", new[] { "da", "da", "da", "", "" })
+            ("1a", "1abS", "111", new[] { "ty", "ty", "ty", "", "", "", "", "" }),
+            ("", "", "", new[] { "da", "da", "da", "", "", "", "", "" })
         );
 
         var activities = creator.CreateActivitiesFromBlock(block);
@@ -72,20 +81,20 @@ public class ActivityCreatorShould
     }
 
     [Fact]
-    public void Should_Not_Create_Activity_If_No_Matching_Block()
+    public void Should_Create_3_Activities()
     {
         var holdTable = CreateHoldTable();
         var creator = new ActivityCreator(holdTable);
 
-        // No matching block
+        // No blocks? Or 3 single lesson blocks?
         var block = CreateBlock(
-            ("1b", "BLAK3", "111", new[] { "", "ty", "ty", "", "" }),
-            ("", "", "", new[] { "da", "da", "eø", "", "" })
+            ("1b", "BLAK3", "111", new[] { ""  , "ty", "ty", "", "", "", "", "" }),
+            (""  , ""     , ""   , new[] { "da", "it", "eø", "", "", "", "", "" })
         );
 
         var activities = creator.CreateActivitiesFromBlock(block);
 
-        Assert.Empty(activities);
+        Assert.True(activities.Count == 3);
     }
 
     [Fact]

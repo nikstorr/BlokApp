@@ -15,7 +15,9 @@ public static class Constants
     public const int BLOKKE_POS3_idx = 6;
     public const int BLOKKE_POS4_idx = 7;
     public const int BLOKKE_POS5_idx = 8;
-
+    public const int BLOKKE_POS6_idx = 9;
+    public const int BLOKKE_POS7_idx = 10;
+    public const int BLOKKE_POS8_idx = 11;
 
     // Helper: Get POS column indices
     public static List<int> PosIndices => 
@@ -25,7 +27,10 @@ public static class Constants
                 BLOKKE_POS2_idx,
                 BLOKKE_POS3_idx,
                 BLOKKE_POS4_idx,
-                BLOKKE_POS5_idx
+                BLOKKE_POS5_idx,
+                BLOKKE_POS6_idx,
+                BLOKKE_POS7_idx,
+                BLOKKE_POS8_idx
             };
     
 }

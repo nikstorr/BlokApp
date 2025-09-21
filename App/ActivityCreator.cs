@@ -4,15 +4,15 @@ using System.Data;
 namespace App
 {
     /*
-     This class is responsible for creating activities from a group of DataRow objects.
+     This class is responsible for creating activities from a group of DataRow objects (rows in an excel dataTable).
         Each group is represented by a Block object containing multiple DataRow objects.
-      The CreateActivitiesFromBlock method analyzes the POS columns in the rows to 
+      The 'CreateActivitiesFromBlock' method analyzes the POS columns in the rows to 
         identify activities based on matching values across the rows.
      */
 
     public class ActivityCreator
     {
-        // each activity deducts 1 from the POS field in the _hold DataTable
+        // HOLD dataTable, used to update POS values as activities are created.
         private readonly DataTable _hold;
 
         public ActivityCreator(DataTable hold)
@@ -20,64 +20,98 @@ namespace App
             _hold = hold;
         }
 
-        public List<Activity> CreateActivitiesFromBlock(Block group)
+        public List<Activity> CreateActivitiesFromBlock(Block block)
         {
             List<Activity> activities = [];
             var posIndices = Constants.PosIndices;
-            var posValues = ExtractPosValues(group, posIndices);
-            string perCiphers = GetPerCiphers(group);
-            string kla = GetKla(group);
-            string blok = GetBlok(group);
 
+            var posValues = ExtractPosValues(block, posIndices);
+            string perCiphers = GetPerCiphers(block);
+            string kla = GetKla(block);
+            string blok = GetBlok(block);
+
+            // index to track how many PER ciphers have been used
             int perCipherIdx = 0;
+
+            // flag to indicate if AKT_NAVN should be simple (just BLOK) or with index (BLOK + index)
             bool useSimpleAktNavn = false;
+
+            // column index in the POS columns. 0 represents the first POS column ( POS1 ).
             int col = 0;
+
+            //  traverse all POS columns
             while (col < posIndices.Count)
             {
+                // Find the largest contiguous block of matching POS columns starting at col
                 int blockLen = FindLargestMatchingBlock(posValues, col);
-                if (blockLen >= 2 && !IsBlockAllEmpty(posValues, col, blockLen))
+                if (IsValidMultiColumnActivity(posValues, col, blockLen))
                 {
                     string per = TakePerCiphers(ref perCipherIdx, blockLen, perCiphers);
                     string aktNavn = useSimpleAktNavn ? blok : $"{blok} {col + 1}";
-                    Activity activity = BuildActivity(kla, aktNavn, col + 1, blockLen, per);
+                    Activity activity = BuildActivity(kla, aktNavn, blockLen, per);
                     activities.Add(activity);
 
-                    UpdateHold(kla, GetStartPosValue(group, posIndices, col));
-                    useSimpleAktNavn = IsHoldPosZero(kla, GetStartPosValue(group, posIndices, col));
+                    UpdateHold(kla, GetStartPosValue(block, posIndices, col));
+                    useSimpleAktNavn = IsHoldPosZero(kla, GetStartPosValue(block, posIndices, col));
+                    
+                    // Advances col by the length of the block just processed.
+                    // Thus, skipping over the columns that are part of this activity.
                     col += blockLen;
                 }
                 else if (IsSingleColumnActivity(posValues, col) && !IsColumnAllEmpty(posValues, col))
                 {
                     string per = TakePerCiphers(ref perCipherIdx, 1, perCiphers);
                     string aktNavn = useSimpleAktNavn ? blok : $"{blok} {col + 1}";
-                    Activity activity = BuildActivity(kla, aktNavn, col + 1, 1, per);
+                    Activity activity = BuildActivity(kla, aktNavn, 1, per);
                     activities.Add(activity);
 
-                    UpdateHold(kla, GetStartPosValue(group, posIndices, col));
-                    useSimpleAktNavn = IsHoldPosZero(kla, GetStartPosValue(group, posIndices, col));
+                    UpdateHold(kla, GetStartPosValue(block, posIndices, col));
+                    useSimpleAktNavn = IsHoldPosZero(kla, GetStartPosValue(block, posIndices, col));
                     col++;
                 }
                 else
                 {
+                    // No valid activity found at this column, move to the next column
                     col++;
                 }
             }
             return activities;
         }
 
+        /// <summary>
+        /// A valid multi-column activity requires at least two columns in the block (blockLen >= 2)
+        /// and not all values in the block are empty.
+        /// </summary>
+        private bool IsValidMultiColumnActivity(List<List<string>> posValues, int col, int blockLen)
+        {
+            return blockLen >= 2 && !IsBlockAllEmpty(posValues, col, blockLen);
+        }
+
+        /// <summary>
+        /// Find the largest block possible.
+        /// Start by trying the largest possible block at startCol and works backwards, returning immediately when a valid block is found.
+        /// It is more efficient in cases where the largest block is likely, as it avoids unnecessary smaller block checks.
+        /// 
+        ///  (posValues are POS field values for all rows in a block.
+        ///  startCol is the index of the first column to investigate)
+        /// </summary>
         private int FindLargestMatchingBlock(List<List<string>> posValues, int startCol)
         {
             int maxBlockLen = 0;
-            for (int blockLen = 2; startCol + blockLen <= posValues[0].Count; blockLen++)
+            int totalCols = posValues[0].Count;
+            for (int blockLen = totalCols - startCol; blockLen >= 2; blockLen--)
             {
-                if (ColumnsMatchOrEmpty(posValues, startCol, blockLen))
-                    maxBlockLen = blockLen;
-                else
-                    break;
+                if (ColumnsMatch(posValues, startCol, blockLen))
+                    return blockLen;
             }
             return maxBlockLen;
         }
-        private bool ColumnsMatchOrEmpty(List<List<string>> posValues, int startCol, int blockLen)
+
+        /// <summary>
+        /// Determine whether, for a given block of POS columns (starting at startCol and spanning blockLen columns), 
+        /// each row in the group has matching values/non-values across those columns.
+        /// </summary>
+        private static bool ColumnsMatch(List<List<string>> posValues, int startCol, int blockLen)
         {
             for (int r = 0; r < posValues.Count; r++)
             {
@@ -97,6 +131,10 @@ namespace App
             }
             return true;
         }
+
+        /// <summary>
+        /// Check if all values in the specified block of columns are empty or whitespace.
+        /// </summary>
         private bool IsBlockAllEmpty(List<List<string>> posValues, int startCol, int blockLen)
         {
             for (int c = startCol; c < startCol + blockLen; c++)
@@ -109,6 +147,9 @@ namespace App
             }
             return true;
         }
+        /// <summary>
+        /// 
+        /// </summary>
         private bool IsSingleColumnActivity(List<List<string>> posValues, int col)
         {
             for (int r = 0; r < posValues.Count; r++)
@@ -118,6 +159,11 @@ namespace App
             }
             return false;
         }
+
+        /*
+         check that not all rows have empty column in the specified column.
+        Used for single column activities
+         */
         private bool IsColumnAllEmpty(List<List<string>> posValues, int col)
         {
             for (int r = 0; r < posValues.Count; r++)
@@ -129,7 +175,7 @@ namespace App
         }
 
         /* 
-         extract the values of the POS columns from the group of rows.
+         extract the values of the POS columns from the group of rows (the block).
          */
         private List<List<string>> ExtractPosValues(Block group, List<int> posIndices)
         {
@@ -165,39 +211,59 @@ namespace App
             return val == null ? "" : val.ToString();
         }
 
-        private string TakePerCiphers(ref int perCipherIdx, int posCount, string perCiphers)
+        /// <summary>
+        /// Extract a substring of digits from the PER field whose sum matches the required POS count
+        /// ( perCipherIdx: a reference to the current index in the PER string, tracking how many ciphers have already been used.
+        ///   posCount: The number of POS columns in the activity (the required sum of digits
+        ///   perCiphers: The full PER string from which to extract digits.)
+        /// </summary>
+        private static string TakePerCiphers(ref int perCipherIdx, int posCount, string perCiphers)
         {
-            int sum = 0;
-            int startIdx = perCipherIdx;
-            int endIdx = startIdx;
-            while (endIdx < perCiphers.Length && sum < posCount)
-            {
-                char c = perCiphers[endIdx];
-                if (char.IsDigit(c))
-                    sum += c - '0';
-                else
-                    break;
-                endIdx++;
-            }
-            // Only return if sum matches posCount exactly
+            int sum = 0, endIdx = perCipherIdx;
+            while (endIdx < perCiphers.Length && sum < posCount && char.IsDigit(perCiphers[endIdx]))
+                sum += perCiphers[endIdx++] - '0';
             if (sum == posCount)
             {
-                string per = perCiphers.Substring(startIdx, endIdx - startIdx);
+                string per = perCiphers.Substring(perCipherIdx, endIdx - perCipherIdx);
                 perCipherIdx = endIdx;
                 return per;
             }
             // Not enough or too many ciphers to match posCount, return empty and do not advance index
             return "";
+
+            // Alternative implementation.
+            //int sum = 0;
+            //int startIdx = perCipherIdx;
+            //int endIdx = startIdx;
+            //while (endIdx < perCiphers.Length && sum < posCount)
+            //{
+            //    char c = perCiphers[endIdx];
+            //    if (char.IsDigit(c))
+            //        sum += c - '0';
+            //    else
+            //        break;
+            //    endIdx++;
+            //}
+            //// Only return if sum matches posCount exactly
+            //if (sum == posCount)
+            //{
+            //    string per = perCiphers.Substring(startIdx, endIdx - startIdx);
+            //    perCipherIdx = endIdx;
+            //    return per;
+            //}
+            //// Not enough or too many ciphers to match posCount, return empty and do not advance index
+            //return "";
         }
 
-        private Activity BuildActivity(string kla, string aktNavn, int posIdx, int blockLen, string per)
+        private static Activity BuildActivity(string kla, string aktNavn, int blockLen, string per)
         {
-            Activity activity = new Activity();
-            activity.KLA = kla;
-            activity.AKT_NAVN = aktNavn;
-            activity.POS = blockLen;
-            activity.PER = per;
-            return activity;
+            return new()
+            {
+                KLA = kla,
+                AKT_NAVN = aktNavn,
+                POS = blockLen,
+                PER = per
+            };
         }
 
         private string GetStartPosValue(Block group, List<int> posIndices, int col)
@@ -244,7 +310,7 @@ namespace App
             for (int i = 0; i < _hold.Rows.Count; i++)
             {
                 DataRow row = _hold.Rows[i];
-                // Again, this weird syntax is to handle both named and indexed columns.
+                // This weird syntax is to handle both named and indexed columns.
                 string rowKla = row.Table.Columns.Contains("KLA") ? row["KLA"].ToString() : row[Constants.BLOKKE_KLA_idx].ToString();
                 string rowAkt = row.Table.Columns.Contains("AKT") ? row["AKT"].ToString() : row[Constants.BLOKKE_BLOK_idx].ToString();
                 if (rowKla == kla && rowAkt == aktValue)
