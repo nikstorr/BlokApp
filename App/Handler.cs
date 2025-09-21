@@ -4,6 +4,9 @@ using System.Data;
 
 namespace App
 {
+    /*
+     This class is the entry point for the application.
+     */
     public class Handler
     {
         readonly string _path = "../../../../Files/Nikolai-Arbejdsopgave_2.xlsx";
