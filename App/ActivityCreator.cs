@@ -1,13 +1,14 @@
 ﻿using App.Domain;
+using System;
 using System.Data;
 
 namespace App
 {
     /*
      This class is responsible for creating activities from a group of DataRow objects (rows in an excel dataTable).
-        Each group is represented by a Block object containing multiple DataRow objects.
-      The 'CreateActivitiesFromBlock' method analyzes the POS columns in the rows to 
-        identify activities based on matching values across the rows.
+     Each group is represented by a Block object containing multiple DataRow objects.
+     The 'CreateActivitiesFromBlock' method analyzes POS columns to identify activities 
+     based on matching values across columns.
      */
 
     public class ActivityCreator
@@ -84,6 +85,7 @@ namespace App
         /// </summary>
         private bool IsValidMultiColumnActivity(List<List<string>> posValues, int col, int blockLen)
         {
+            // TODO remove unnecessary check for IsBlockAllEmpty. This will never be the case since input data have been sanitized
             return blockLen >= 2 && !IsBlockAllEmpty(posValues, col, blockLen);
         }
 
@@ -134,6 +136,7 @@ namespace App
 
         /// <summary>
         /// Check if all values in the specified block of columns are empty or whitespace.
+        /// TODO remove this method. It will never be the case since input data have been sanitized
         /// </summary>
         private bool IsBlockAllEmpty(List<List<string>> posValues, int startCol, int blockLen)
         {
@@ -147,8 +150,10 @@ namespace App
             }
             return true;
         }
+ 
         /// <summary>
-        /// 
+        /// Check if there is at least one non-empty value in the specified column across all rows.
+        /// Used to identify single column activities.
         /// </summary>
         private bool IsSingleColumnActivity(List<List<string>> posValues, int col)
         {
@@ -160,10 +165,10 @@ namespace App
             return false;
         }
 
-        /*
-         check that not all rows have empty column in the specified column.
-        Used for single column activities
-         */
+        /// <summary>
+        /// check that not all rows have empty column in the specified column.
+        /// Used for single column activities
+        /// <summary>
         private bool IsColumnAllEmpty(List<List<string>> posValues, int col)
         {
             for (int r = 0; r < posValues.Count; r++)
@@ -174,18 +179,18 @@ namespace App
             return true;
         }
 
-        /* 
-         extract the values of the POS columns from the group of rows (the block).
-         */
-        private List<List<string>> ExtractPosValues(Block group, List<int> posIndices)
+        /// <summary>
+        /// extract the values of the POS columns from the group of rows (the block).
+        /// <summary>
+        private List<List<string>> ExtractPosValues(Block block, List<int> posIndices)
         {
             List<List<string>> posValues = [];
-            for (int i = 0; i < group.Rows.Count; i++)
+            for (int i = 0; i < block.Rows.Count; i++)
             {
                 List<string> rowValues = [];
                 for (int j = 0; j < posIndices.Count; j++)
                 {
-                    object val = group.Rows[i][posIndices[j]];
+                    object val = block.Rows[i][posIndices[j]];
                     rowValues.Add(val == null ? "" : val.ToString());
                 }
                 posValues.Add(rowValues);
@@ -213,9 +218,9 @@ namespace App
 
         /// <summary>
         /// Extract a substring of digits from the PER field whose sum matches the required POS count
-        /// ( perCipherIdx: a reference to the current index in the PER string, tracking how many ciphers have already been used.
+        /// ( perCipherIdx: a reference to the current index in the PER string, tracking how many ciphers have already been used (and can't be used nomore).
         ///   posCount: The number of POS columns in the activity (the required sum of digits
-        ///   perCiphers: The full PER string from which to extract digits.)
+        ///   perCiphers: The full PER string from which to extract digits )
         /// </summary>
         private static string TakePerCiphers(ref int perCipherIdx, int posCount, string perCiphers)
         {
@@ -231,7 +236,7 @@ namespace App
             // Not enough or too many ciphers to match posCount, return empty and do not advance index
             return "";
 
-            // Alternative implementation.
+            // ALTERNATIVE IMPLEMENTATION!
             //int sum = 0;
             //int startIdx = perCipherIdx;
             //int endIdx = startIdx;
@@ -272,6 +277,11 @@ namespace App
             return val == null ? "" : val.ToString();
         }
 
+        /// <summary>
+        /// each time an activity is created, the HOLD table must be updated:
+        ///     HOLD.POS must be decremented by 1 for the row where HOLD.KLA matches the group's KLA and HOLD.AKT matches the POS value 
+        ///     of the BLOK (that indicates the start of the activity).
+        /// </summary>
         private void UpdateHold(string kla, string aktValue)
         {
             var row = _hold.AsEnumerable()
@@ -287,7 +297,7 @@ namespace App
                 row[posField] = posVal;
             }
 
-            // Alternative way without LINQ
+            // ALTERNATIVE IMPLEMENTATION ( without LINQ )
             //for (int i = 0; i < _hold.Rows.Count; i++)
             //{
             //    DataRow row = _hold.Rows[i];
@@ -323,134 +333,5 @@ namespace App
             }
             return false;
         }
-
-/*
-    Examples of group and activity:
-
-group 1:
-
-     | KLA | BLOK |  PER | POS1 | POS2 | POS3 |
-     | 1a  | 1abS |  111 | ty   | ty   | ty   |
-     |     |      |      | da   | da   | da   |
-
-activities:
-
-     | KLA | AKT_NAVN | POS | PER  |
-     |  1a |  BLOK1 1 |  3  |  111 |
-
-    group 1 results in 1 activity because there is at least two identical POS columns in all rows (ty and da)
-        ·	The value can be different for each row, but must be the same across all columns for the block.  
-     where 
-        KLA is KLA, 
-        AKT_NAVN is the BLOK value from the group concatenated with the index of the first POS field in the activity.
-        POS is the number of identical POS fields in the activity (in this example 3 because POS1, POS2 and POS3 matches each other in all rows).
-        PER is the number of identical POS fields in the activity represented as the PER ciphers from the group 
-            (in this example 111 because the activity spans 3 POS columns).
-
- -------
- group 2:
-
-     | KLA | BLOK  |  PER | POS1 | POS2 | POS3 |
-     |1b   | BLAK3 |  111 |      | ty   | ty   |
-     |     |       |      | da   | da   | eø   |
-group 2 does not result in any activity because there is no way to make an activity that spans at least two POS columns in all rows.
-        
-        in this example the group does not become an activity because even if both rows have at least two identical column values (ty and da)
-            the forst row has values in columns POS2, and POS3 while row 2 has idnetical values in columns POS1 and POS2.
-            There is no way to make an activity that spans at least two POS columns in all rows.
- -------
- group 3:
-
-     | KLA | BLOK  |  PER | REF  | POS1 | POS2 | POS3 | POS4 |
-     | 3a  | V4    |  211 |	3a   | eø   | eø   | eø	  |      |
-     |     |       |      | 3b   | ke   | ke   | ke	  | ke   |
-     |     |       |      |	     | Idv  | Idv  | Idv  | Idv  | 
-     |     |       |      | 3a   | ps2  | ps2  | ps2  |	     |
-
-     in this example the group becomes two activities. The first activity is because there is at least two identical columns in all rows (eø, ke, idv,ps2). 
-        In his example the first activity spans POS1 to POS3 because all these values in each of the rows have similar values.
-        The second activity is because POS4 contains data outside the first activity. In this single POS column activity no matching values acrross all rows is needed. 
-     The resulting activities becomes: 
-
-activities:
-     
-     | KLA | AKT_NAVN | POS | PER  |
-     |  3a |  V4 1    |  3  |  21  |
-     |  3a |  V4 4    |  1  |  1   |
-
-     In the first activity AKT_NAVN is the BLOK value concatenated with the index of the first POS field in the activity 
-            (in this example the first activity starts in POS1)
-     In the second activity AKT_NAVN is the BLOK value concatenated with the index of the first POS field in the activity 
-           (in this example the second activity starts in POS4)
-
- -------
- group 4:
-
-     | KLA | BLOK  |  PER | REF  | POS1 | POS2 | POS3 | POS4 |
-     | 2d  | BLOK1 | 211  |      | ke   | ke   | ke   | ke   | 
-     |     |       |      |  3a  | re   | re   |      |      |
-
-     in this example the group becomes two activities. 
-        The first activity spans POS columns 1 and 2. 
-        The second activity spans POS columns 3 and 4. Notice how the second row does not have values in POS3 and POS4. Tha is still considered matching value. 
-     The resulting activities becomes: 
-
-     | KLA | AKT_NAVN | POS | PER  |
-     |  2d |  BLOK1 1 |  2  |  2   |    
-     |  2d |  BLOK1 3 |  2  |  11  |
-
-     in the first activity AKT_NAVN is the BLOK value concatenated with the index of the first POS field in the activity 
-            (in this example the first activity starts in POS1)
-        the POS value is 2 because the activity spans two POS columns.
-        the PER value is taken from the blok PER fields ciphers (from left to right). We take the number of ciphers which added up equals the number of POS columns in the activity.
-            (every time we use ciphers from the group PER field we remove them from that field. They can only be used once.)
-    in the second activity AKT_NAVN is the BLOK value concatenated with the index of the first POS field in the activity 
-           (in this example the second activity starts in POS3)
-        the POS value is 2 because the activity spans two POS columns.
-        the PER value is taken from the group PER field's ciphers (from left to right). 
-            We take the number of ciphers which added up equals the number of POS columns in the activity.
-                In this case we take the ciphers 11 because the first activity already used the first cipher 2.
- --------
- group 5:
-
-     | KLA | BLOK     |  PER | REF  | POS1 | POS2 | POS3 | POS4 | POS5 |
-     |  3s |	VB5   |	11111|	    | enA  | enA  | enA  | enA  |      |			
-     |     |          |	     | 3u   | enA  | enA  | enA  | enA  |      |			
-     |     |	      |	     | 3u   | maA  | maA  | maA  | maA  | maA  |		
-     |     |	      |	     |	    | frbA2| frbA2| frbA2|frbA2 | frbA2|			
-     |     |	      |	     | 3y   | keA  | keA  | keA  | keA  | keA  |			
-     |     |	      |	     | 3v   | maA2 | maA2 | maA2 | maA2 | maA2 |			
-     |     |	      |	     |	    | tyfA | tyfA | tyfA | tyfA | tyfA |			
-        
-           in this example the group becomes two activities. 
-            The first activity spans POS columns 1 to 4. 
-            The second activity spans POS column 5. Notice how the first activity spans four POS columns because all these columns have matching values across all rows (enA, maA, frbA2, keA, maA2, tyfA).
-            The second activity is a single POS column activity because there are no matching values across all rows in POS1 to POS4.
-
-The resulting activities becomes: 
-
-     | KLA | AKT_NAVN | POS | PER  |
-     |  3s |  VB5 1   |  4  | 1111 |    
-     |  3u |  VB5 5   |  1  |  1   |
-
----------------
- 
-For each extracted activity the _hold DataTable must be updated:
-
-fetch the single row from _hold where: 
-    KLA matches the group's KLA and 
-    AKT matches the value of the POS column that indicates the start of an activity.
-
-Deduct 1 from that row's POS field. 
-            
-If the _hold POS field is now 0, then AKT_NAVN for the activity becomes simply the BLOK value from group 
-    (without the index of the first POS column in the activity).
-. Any subsequent activities created for this group will also have AKT_NAVN without the index.
-
-
-*/
-
-
-
     }
 }
