@@ -20,17 +20,16 @@ public static class Constants
     public const int BLOKKE_POS8_idx = 11;
 
     // Helper: Get POS column indices
-    public static List<int> PosIndices => 
-    new List<int>
-            {
-                BLOKKE_POS1_idx,
-                BLOKKE_POS2_idx,
-                BLOKKE_POS3_idx,
-                BLOKKE_POS4_idx,
-                BLOKKE_POS5_idx,
-                BLOKKE_POS6_idx,
-                BLOKKE_POS7_idx,
-                BLOKKE_POS8_idx
-            };
+    public static List<int> PosIndices =>  
+        [
+            BLOKKE_POS1_idx,
+            BLOKKE_POS2_idx,
+            BLOKKE_POS3_idx,
+            BLOKKE_POS4_idx,
+            BLOKKE_POS5_idx,
+            BLOKKE_POS6_idx,
+            BLOKKE_POS7_idx,
+            BLOKKE_POS8_idx
+        ];
     
 }

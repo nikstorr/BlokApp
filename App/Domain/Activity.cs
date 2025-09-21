@@ -3,10 +3,10 @@
 public class Activity
 {
     /* 
-     this a Data transfer object (DTO) for activities.
-        It is not necessary to use a class for this as there are no app boundaries to cross.
-    DTO's are only used when crossing between one app boundary to another.
-    Consider using a DataTable directly
+     This a Data transfer object (DTO) for activities.
+     It is not necessary to use a class for this as there are no app boundaries to cross.
+    
+     TODO Consider using a DataTable directly
      */
 
 
