@@ -305,13 +305,6 @@ namespace App
 
         }
 
-        private void HandleREFValues(string kla, int aktValue)
-        {
-
-
-
-        }
-
         /// <summary>
         /// check whether the POS field in the _hold DataTable is zero for a specific row identified by KLA and AKT values
         /// </summary>
