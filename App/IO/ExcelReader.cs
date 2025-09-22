@@ -12,9 +12,7 @@ public class ExcelReader
         {
             using (var reader = ExcelReaderFactory.CreateReader(stream))
             {
-
                 result = reader.AsDataSet();
-                // The result of each spreadsheet is in result.Tables
             }
         }
         return result;

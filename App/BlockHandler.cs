@@ -7,9 +7,10 @@ namespace App
     /*
      This class is the entry point for the application.
      */
-    public class Handler
+    public class BlockHandler
     {
         readonly string _path = "../../../../Files/Nikolai-Arbejdsopgave_2.xlsx";
+        readonly string outputPath = "../../../../Files/Activities.xlsx";
         // all tables in the excel input file
         readonly DataSet _tableSet = new();
         // The resulting activities as a DataTable ready to write as a new excel spreadsheet
@@ -22,8 +23,8 @@ namespace App
         readonly List<Activity> _activities = [];
 
         readonly ActivityCreator _activityCreator;
-
-        public Handler()
+        ExcelWriter _excelWriter = new();
+        public BlockHandler()
         {
             _tableSet = new ExcelReader().ReadExcelFile(_path);
             // TODO check if it is an anti-pattern (to use the HOLD table here in the ctor, before it is assigned anything.
@@ -46,6 +47,8 @@ namespace App
 
             // convert from domain objects to DataTable for easy saving to Excel
             ConvertToDataTable();
+            // save to disc
+            _excelWriter.WriteExcelFile(outputPath, _result);
         }
 
         private void PopulateTables()
@@ -137,10 +140,13 @@ namespace App
         public void ConvertToDataTable()
         {
             DataTable dt = new();
+            dt.Locale = System.Globalization.CultureInfo.InvariantCulture;
+
             dt.Columns.Add("KLA", typeof(string));
             dt.Columns.Add("AKT_NAVN", typeof(string));
             dt.Columns.Add("POS", typeof(int));
             dt.Columns.Add("PER", typeof(string));
+
             foreach (var activity in _activities)
             {
                 dt.Rows.Add(activity.KLA, activity.AKT_NAVN, activity.POS, activity.PER);

@@ -10,11 +10,11 @@ namespace UnitTests
         [Fact]
         public void ReadExcelFile()
         {
-
-            var path = "../../../../Files/Nikolai-Arbejdsopgave.xlsx";
+            var path = "../../../../Files/Nikolai-Arbejdsopgave_2.xlsx";
             var data = _reader.ReadExcelFile(path);
 
-
+            Assert.NotNull(data);
+            Assert.Equal(10, data.Tables.Count);
         }
     }
 }

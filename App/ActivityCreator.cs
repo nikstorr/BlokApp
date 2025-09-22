@@ -303,22 +303,13 @@ namespace App
                 row[posField] = posVal;
             }
 
-            // ALTERNATIVE IMPLEMENTATION ( without LINQ )
-            //for (int i = 0; i < _hold.Rows.Count; i++)
-            //{
-            //    DataRow row = _hold.Rows[i];
-            //    string rowKla = row.Table.Columns.Contains("KLA") ? row["KLA"].ToString() : row[Constants.BLOKKE_KLA_idx].ToString();
-            //    string rowAkt = row.Table.Columns.Contains("AKT") ? row["AKT"].ToString() : row[Constants.BLOKKE_BLOK_idx].ToString();
-            //    if (rowKla == kla && rowAkt == aktValue)
-            //    {
-            //        string posField = row.Table.Columns.Contains("POS") ? "POS" : Constants.BLOKKE_POS1_idx.ToString();
-            //        int posVal = 0;
-            //        int.TryParse(row[posField].ToString(), out posVal);
-            //        posVal = Math.Max(0, posVal - 1);
-            //        row[posField] = posVal;
-            //        break;
-            //    }
-            //}
+        }
+
+        private void HandleREFValues(string kla, int aktValue)
+        {
+
+
+
         }
 
         /// <summary>

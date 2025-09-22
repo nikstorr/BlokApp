@@ -3,6 +3,8 @@ using System.Data;
 using App;
 using App.Domain;
 
+namespace UnitTests;
+
 public class ActivityCreatorShould
 {
     // Note there will never be a block with no activities in it,
