@@ -5,7 +5,6 @@ using App.Domain;
 using App.IO;
 using System.Data;
 
-
 // ------
 string inputPath = "../../../../Files/Nikolai-Arbejdsopgave_2.xlsx";
 string outputPath = "../../../../Files/Activities.xlsx";

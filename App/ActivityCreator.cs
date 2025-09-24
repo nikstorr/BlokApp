@@ -30,8 +30,6 @@ namespace App
             var posIndices = _helper.GetPosIndices(block, firstPOSIdx);
             var posValues = _helper.ExtractPosValues(block, firstPOSIdx);
 
-
-
             string perCiphers = _helper.GetPerCiphers(block);
             string kla = _helper.GetKlaValue(block);
             string blok = _helper.GetBlokValue(block);
@@ -83,8 +81,6 @@ namespace App
             }
             return activities;
         }
-         
-        
 
         private static Activity BuildActivity(string kla, string aktNavn, int blockLen, string per)
         {

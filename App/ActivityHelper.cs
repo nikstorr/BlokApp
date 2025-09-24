@@ -128,6 +128,7 @@ namespace App
             return Enumerable.Range(firstPOSIdx, maxCount).ToList();
 
         }
+
         /// <summary>
         /// extract the values of the POS columns from the group of rows (the block).
         /// <summary>
@@ -191,6 +192,5 @@ namespace App
             // Not enough or too many ciphers to match posCount, return empty and do not advance index
             return "";
         }
-    
     }
 }

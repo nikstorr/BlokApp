@@ -39,7 +39,6 @@ namespace App
             return _firstPosIdx;
         }   
 
-
         /// <summary>
         ///  Group a sequence of DataRow objects (from the BLOKKE table) into logical blocks, each represented by a Block object. 
         ///  Each block corresponds to a set of rows that share the same (KLA, BLOK) key
