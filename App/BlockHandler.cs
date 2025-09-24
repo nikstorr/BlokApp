@@ -4,79 +4,41 @@ using System.Data;
 
 namespace App
 {
-    /*
-     This class is the entry point for the application.
-     */
     public class BlockHandler
     {
-        readonly string _path = "../../../../Files/Nikolai-Arbejdsopgave_2.xlsx";
-        readonly string outputPath = "../../../../Files/Activities.xlsx";
-        // all tables in the excel input file
-        readonly DataSet _tableSet = new();
-        // The resulting activities as a DataTable ready to write as a new excel spreadsheet
-        DataTable _result = new();
-        public DataTable Result => _result;
-        // HOLD and BLOKKE tables
-        DataTable _holdTable = new();
-        DataTable _blokkeTable = new();
-        // resulting Activities as domain objects, before converting into DataTable
-        readonly List<Activity> _activities = [];
+        List<string> columnHeaders = [];
+        private readonly List<Activity> _activities = [];
 
-        readonly ActivityCreator _activityCreator;
-        ExcelWriter _excelWriter = new();
-        public BlockHandler()
+        List<Block> _blocks = new();
+        private readonly ActivityCreator _activityCreator;
+
+        // index of first POS column
+        private int _firstPosIdx = -1;
+
+        public BlockHandler(ActivityCreator activityCreator)
         {
-            _tableSet = new ExcelReader().ReadExcelFile(_path);
-            // TODO check if it is an anti-pattern (to use the HOLD table here in the ctor, before it is assigned anything.
-            _activityCreator =  new ActivityCreator(_holdTable);
+            _activityCreator = activityCreator;
         }
 
-        /// <summary>
-        /// Entry point.
-        /// </summary>
-        public void HandleBlocks()
+        public List<Block> GetBlocksToProcess(DataTable table)
         {
-            PopulateTables();
+            GetFirstPOSIdx(table);
 
-            foreach (var block in GetBlocksToProcess(_blokkeTable))
-            {
-                var activities = _activityCreator.CreateActivitiesFromBlock(block);
-                foreach(var act in activities)
-                    _activities.Add(act);
-            }
-
-            // convert from domain objects to DataTable for easy saving to Excel
-            ConvertToDataTable();
-            // save to disc
-            _excelWriter.WriteExcelFile(outputPath, _result);
-        }
-
-        private void PopulateTables()
-        {
-            // Fetch the HOLD table (5th table, index 4) from the DataSet, here!
-            // Don't fetch it in the ctor. Somehow that breaks the ExcelReader.
-            _holdTable = _tableSet.Tables[Constants.HOLD_idx];
-            // Fetch the BLOKKE table (6th table, index 5) from the _tableSet
-            // Don't fetch it in the ctor. That messes with the Excel data reader, somehow.
-            _blokkeTable = _tableSet.Tables[Constants.BLOKKE_idx];
-        }
-
-        private List<Block> GetBlocksToProcess(DataTable table)
-        {
-            var filteredRows = RemoveEmptyRows(table);
+            var filteredRows = Util.RemoveEmptyBlokkeRows(table);
             return CreateActivityBlocks(filteredRows);
         }
 
-        private static IEnumerable<DataRow> RemoveEmptyRows(DataTable blokkeTable)
+        public int GetFirstPOSIdx(DataTable table)
         {
-            return blokkeTable.Rows.Cast<DataRow>().Skip(2)
-                .Where(row =>
-                  
-                    // Exclude rows where all POS columns are empty or null
-                    Enumerable.Range(Constants.BLOKKE_POS1_idx, Constants.BLOKKE_POS5_idx - Constants.BLOKKE_POS1_idx + 1)
-                        .Any(posIdx => !row.IsNull(posIdx) && !string.IsNullOrWhiteSpace(row[posIdx]?.ToString()))
-                );
-        }
+            columnHeaders = table.Rows[0].ItemArray
+                .Where(item => item != null && item.ToString() != string.Empty)
+                .Select(x => x.ToString())
+                .ToList();
+
+            _firstPosIdx = columnHeaders.FindIndex(h => h.Contains("POS", StringComparison.OrdinalIgnoreCase));
+            return _firstPosIdx;
+        }   
+
 
         /// <summary>
         ///  Group a sequence of DataRow objects (from the BLOKKE table) into logical blocks, each represented by a Block object. 
@@ -95,7 +57,11 @@ namespace App
             {
                 var kla = row[Constants.BLOKKE_KLA_idx]?.ToString();
                 var blok = row[Constants.BLOKKE_BLOK_idx]?.ToString();
+
                 var key = (kla, blok);
+                // skip header rows
+                if (key == ("KLA", "BLOK"))
+                    continue;
 
                 // If KLA is empty, add row to current group (if any), or create a new group if none exists
                 if (string.IsNullOrWhiteSpace(kla))
@@ -133,27 +99,5 @@ namespace App
 
             return blocks;
         }
-
-        /// <summary>
-        /// Convert from domain object to DataTable for easy saving to Excel.
-        /// </summary>
-        public void ConvertToDataTable()
-        {
-            DataTable dt = new();
-            dt.Locale = System.Globalization.CultureInfo.InvariantCulture;
-
-            dt.Columns.Add("KLA", typeof(string));
-            dt.Columns.Add("AKT_NAVN", typeof(string));
-            dt.Columns.Add("POS", typeof(int));
-            dt.Columns.Add("PER", typeof(string));
-
-            foreach (var activity in _activities)
-            {
-                dt.Rows.Add(activity.KLA, activity.AKT_NAVN, activity.POS, activity.PER);
-            }
-            // Now _activities is a DataTable that can be saved in Excel format.
-            _result = dt;
-        }
     }
-
 }

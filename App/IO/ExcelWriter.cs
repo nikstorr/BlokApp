@@ -3,8 +3,23 @@ using System.Data;
 
 namespace App.IO
 {
-    public class ExcelWriter
+    public interface IExcelWriter
     {
+        void WriteExcelFile(DataTable table);
+        void WriteExcelFile(string filePath, DataTable dataTable);
+    }
+    public class ExcelWriter : IExcelWriter
+    {
+        private readonly string path;
+
+        public ExcelWriter(string path)
+        {
+            this.path = path;
+        }
+        public void WriteExcelFile(DataTable table)
+        {
+            WriteExcelFile(path, table);
+        }
         public void WriteExcelFile(string filePath, DataTable dataTable)
         {
             // Implementation for writing to an Excel file would go here.

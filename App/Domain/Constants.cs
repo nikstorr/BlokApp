@@ -5,6 +5,11 @@ public static class Constants
     public const int HOLD_idx = 4;
     public const int BLOKKE_idx = 7;
 
+    // Column indices for HOLD table ()
+    public const int HOLD_KLA_idx = 0;
+    public const int HOLD_AKT_idx = 1;
+    public const int HOLD_POS_idx = 2; 
+
     // Column indices for BLOKKE table
     public const int BLOKKE_KLA_idx = 0;
     public const int BLOKKE_BLOK_idx = 1;

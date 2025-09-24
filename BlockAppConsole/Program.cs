@@ -1,8 +1,22 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
-
 using App;
+using App.Domain;
+using App.IO;
 using System.Data;
+
+
+// ------
+string inputPath = "../../../../Files/Nikolai-Arbejdsopgave_2.xlsx";
+string outputPath = "../../../../Files/Activities.xlsx";
+
+var excelReader = new ExcelReader(inputPath);
+var excelWriter = new ExcelWriter(outputPath);
+
+DataSet tableSet = excelReader.ReadExcelFile(inputPath);
+
+var runner = new Runner(excelReader, excelWriter);
+// ------
 
 const int klaWidth = 6;
 const int aktNavnWidth = 12;
@@ -17,10 +31,10 @@ Console.WriteLine(
     $"|{"KLA",-klaWidth}|{"AKT_NAVN",-aktNavnWidth}|{"POS",-posWidth}|{"PER",-perWidth}|");
 Console.WriteLine(border);
 
-var handler = new BlockHandler();
-handler.HandleBlocks();
+// Run main logic
+runner.Run(); 
 
-foreach (DataRow row in handler.Result.Rows)
+foreach (DataRow row in runner.Result.Rows)
 {
     Console.WriteLine(
         $"|{row["KLA"],-klaWidth}|{row["AKT_NAVN"],-aktNavnWidth}|{row["POS"],-posWidth}|{row["PER"],-perWidth}|");
