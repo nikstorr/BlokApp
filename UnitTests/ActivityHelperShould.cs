@@ -99,7 +99,7 @@ public class ActivityHelperShould
         var block = CreateBlock("1a", "BLOK1", "123", new[] { "A", "B", "C" }, new[] { "D", "E", "F" });
         var posIndices = new List<int> { 3, 4, 5 }; // POS1, POS2, POS3 columns
 
-        var posValues = helper.ExtractPosValues(block, 3);
+        var posValues = helper.GetPosValues(block, 3);
         Assert.Equal(2, posValues.Count);
         new List<string> { "A", "B", "C" }.Should().BeEquivalentTo(posValues[0]);
         new List<string> { "D", "E", "F" }.Should().BeEquivalentTo(posValues[1]);

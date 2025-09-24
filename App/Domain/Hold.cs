@@ -11,6 +11,5 @@ namespace App.Domain
         public string KLA { get; set; }
         public string AKT { get; set; }
         public int POS { get; set; }
-        public int Errors { get; set; }
     }
 }

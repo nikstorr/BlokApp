@@ -28,7 +28,7 @@ namespace App
             List<Activity> activities = [];
 
             var posIndices = _helper.GetPosIndices(block, firstPOSIdx);
-            var posValues = _helper.ExtractPosValues(block, firstPOSIdx);
+            var posValues = _helper.GetPosValues(block, firstPOSIdx);
 
             string perCiphers = _helper.GetPerCiphers(block);
             string kla = _helper.GetKlaValue(block);

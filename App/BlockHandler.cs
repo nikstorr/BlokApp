@@ -25,8 +25,6 @@ namespace App
 
         public List<Block> GetBlocksToProcess(DataTable table)
         {
-            GetFirstPOSIdx(table);
-
             var filteredRows = Util.RemoveEmptyBlokkeRows(table);
             return CreateActivityBlocks(filteredRows);
         }
@@ -38,8 +36,7 @@ namespace App
                 .Select(x => x.ToString())
                 .ToList();
 
-            _firstPosIdx = columnHeaders.FindIndex(h => h.Contains("POS", StringComparison.OrdinalIgnoreCase));
-            return _firstPosIdx;
+            return columnHeaders.FindIndex(h => h.Contains("POS", StringComparison.OrdinalIgnoreCase));
         }   
 
         /// <summary>

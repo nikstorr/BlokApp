@@ -131,7 +131,7 @@ namespace App
         /// <summary>
         /// extract the values of the POS columns from the group of rows (the block).
         /// <summary>
-        public List<List<string>> ExtractPosValues(Block block, int firstPosIdx)
+        public List<List<string>> GetPosValues(Block block, int firstPosIdx)
         {
             if (block.Rows.Count == 0)
                 return [];
