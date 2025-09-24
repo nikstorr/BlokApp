@@ -30,7 +30,7 @@ namespace UnitTests
             var holdTable = CreateHoldTable(("A", "X", 2), ("", "", 0));
             var blokkeTable = CreateBlokkeTable();
 
-            var handler = new HoldHandler(holdTable, blokkeTable, new List<Block>());
+            var handler = new HoldHandler(holdTable, blokkeTable);
 
             Assert.Single(handler._hold);
             Assert.Equal("A", handler._hold[0].KLA);
@@ -43,7 +43,7 @@ namespace UnitTests
         {
             var holdTable = CreateHoldTable(("A", "X", 1));
             var blokkeTable = CreateBlokkeTable();
-            var handler = new HoldHandler(holdTable, blokkeTable, new List<Block>());
+            var handler = new HoldHandler(holdTable, blokkeTable);
 
             handler.UpdateHold("A", "X");
             Assert.Equal(0, handler._hold[0].POS);
@@ -57,7 +57,7 @@ namespace UnitTests
         {
             var holdTable = CreateHoldTable(("A", "X", 2));
             var blokkeTable = CreateBlokkeTable();
-            var handler = new HoldHandler(holdTable, blokkeTable, new List<Block>());
+            var handler = new HoldHandler(holdTable, blokkeTable);
 
             handler.UpdateHold("B", "Y");
             Assert.Equal(2, handler._hold[0].POS);
@@ -68,7 +68,7 @@ namespace UnitTests
         {
             var holdTable = CreateHoldTable(("A", "X", 0));
             var blokkeTable = CreateBlokkeTable();
-            var handler = new HoldHandler(holdTable, blokkeTable, new List<Block>());
+            var handler = new HoldHandler(holdTable, blokkeTable);
 
             Assert.True(handler.IsHoldPosZero("A", "X"));
         }
@@ -78,7 +78,7 @@ namespace UnitTests
         {
             var holdTable = CreateHoldTable(("A", "X", 2));
             var blokkeTable = CreateBlokkeTable();
-            var handler = new HoldHandler(holdTable, blokkeTable, new List<Block>());
+            var handler = new HoldHandler(holdTable, blokkeTable);
 
             Assert.False(handler.IsHoldPosZero("A", "X"));
         }
@@ -88,7 +88,7 @@ namespace UnitTests
         {
             var holdTable = CreateHoldTable(("A", "X", 0));
             var blokkeTable = CreateBlokkeTable();
-            var handler = new HoldHandler(holdTable, blokkeTable, new List<Block>());
+            var handler = new HoldHandler(holdTable, blokkeTable);
 
             Assert.False(handler.IsHoldPosZero("B", "Y"));
         }

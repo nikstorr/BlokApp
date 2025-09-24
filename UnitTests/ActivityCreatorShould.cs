@@ -14,7 +14,7 @@ namespace UnitTests
         {
             var randomFirsPOSIdx = 3;
 
-            var holdHandler = Substitute.For<HoldHandler>((DataTable)null, (DataTable)null, null);
+            var holdHandler = Substitute.For<HoldHandler>((DataTable)null, (DataTable)null);
             var creator = new ActivityCreator(holdHandler);
 
             var result = creator.CreateActivitiesFromBlock(null, randomFirsPOSIdx);
@@ -27,7 +27,7 @@ namespace UnitTests
         {
             var randomFirsPOSIdx = 3;
 
-            var holdHandler = Substitute.For<HoldHandler>((DataTable)null, (DataTable)null, null);
+            var holdHandler = Substitute.For<HoldHandler>((DataTable)null, (DataTable)null);
             var creator = new ActivityCreator(holdHandler);
             var block = new Block { Key = ("A","B"), Rows = new List<DataRow>() };
 
@@ -39,7 +39,7 @@ namespace UnitTests
         [Fact]
         public void CreateActivitiesFromBlock_CreatesActivities_WithExpectedAktNavn()
         {
-            var holdHandler = Substitute.For<HoldHandler>((DataTable)null, (DataTable)null, null);
+            var holdHandler = Substitute.For<HoldHandler>((DataTable)null, (DataTable)null);
             holdHandler.IsHoldPosZero(Arg.Any<string>(), Arg.Any<string>()).Returns(true);
             var creator = new ActivityCreator(holdHandler);
 
@@ -72,7 +72,7 @@ namespace UnitTests
         [Fact]
         public void CreateActivitiesFromBlock_CallsIsHoldPosZero()
         {
-            var holdHandler = Substitute.For<HoldHandler>(Substitute.For<DataTable>(), Substitute.For<DataTable>(), null);
+            var holdHandler = Substitute.For<HoldHandler>(Substitute.For<DataTable>(), Substitute.For<DataTable>());
             holdHandler.IsHoldPosZero(Arg.Any<string>(), Arg.Any<string>()).Returns(false); 
             
             var creator = new ActivityCreator(holdHandler);

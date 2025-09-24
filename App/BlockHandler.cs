@@ -4,6 +4,9 @@ using System.Data;
 
 namespace App
 {
+    /*
+     this class is responsible for creating Blocks from the BLOKKE table
+     */
     public class BlockHandler
     {
         List<string> columnHeaders = [];

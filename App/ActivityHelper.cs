@@ -109,8 +109,6 @@ namespace App
         /// <summary>
         /// rettrieve the indices for POS columns in a block
         /// </summary>
-        /// <param name="block"></param>
-        /// <returns></returns>
         public List<int> GetPosIndices(Block block, int firstPOSIdx)
         {
             if (block is null || block.Rows == null || block.Rows.Count == 0)
@@ -120,7 +118,8 @@ namespace App
             if (table == null)
                 return [];
 
-            // Take up to 8 columns starting at firstPOSIdx, but do not exceed the column count
+            // Take up to 8 columns (the amount of POS columns in the example file) starting at firstPOSIdx,
+            // but do not exceed the column count
             int maxCount = Math.Min(8, table.Columns.Count - firstPOSIdx);
             if (maxCount <= 0)
                 return [];

@@ -5,6 +5,9 @@ namespace App
 {
     public static class Util
     {
+        /// <summary>
+        /// Remove rows where either KLA or AKT columns are empty or whitespace.
+        /// </summary>
         public static IEnumerable<DataRow> RemoveEmptyRows(DataTable table)
         {
             if(table is not null && table.Rows.Count > 0)
@@ -22,20 +25,20 @@ namespace App
             return Enumerable.Empty<DataRow>();
         }
 
-        public static List<int> GetPosIndices(DataTable table)
-        {
+        //public static List<int> GetPosIndices(DataTable table)
+        //{
 
-            var posIndices = new List<int>();
-            for (int i = 1; i <= 8; i++)
-            {
-                var colName = $"POS{i}";
-                if (table.Columns.Contains(colName))
-                {
-                    posIndices.Add(table.Columns[colName].Ordinal);
-                }
-            }
-            return posIndices;
-        }
+        //    var posIndices = new List<int>();
+        //    for (int i = 1; i <= 8; i++)
+        //    {
+        //        var colName = $"POS{i}";
+        //        if (table.Columns.Contains(colName))
+        //        {
+        //            posIndices.Add(table.Columns[colName].Ordinal);
+        //        }
+        //    }
+        //    return posIndices;
+        //}
 
         public static List<int> GetAllIndices(DataTable table)
         {

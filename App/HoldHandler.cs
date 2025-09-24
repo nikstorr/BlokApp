@@ -9,7 +9,7 @@ public class HoldHandler
     private readonly DataTable _holdTable;
     private readonly DataTable _blokkeTable;
 
-    public HoldHandler(DataTable hold, DataTable blokke, List<Block> blocks)
+    public HoldHandler(DataTable hold, DataTable blokke)
     {
         _holdTable = hold;
         _blokkeTable = blokke;
@@ -20,6 +20,7 @@ public class HoldHandler
     private void CreateHold()
     {
         var filteredHOLD = Util.RemoveEmptyRows(_holdTable);
+
         foreach (DataRow row in filteredHOLD.Skip(1)) // skip Header row
         {
             string kla = row[Constants.HOLD_KLA_idx]?.ToString() ?? "invalid";

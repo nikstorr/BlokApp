@@ -58,7 +58,7 @@ namespace App
                     UpdateHold(kla, GetStartPosValue(block, posIndices, col));
                     useSimpleAktNavn = _hold.IsHoldPosZero(kla, GetStartPosValue(block, posIndices, col));
                     
-                    // Advances col by the length of the block just processed.
+                    // Advance col by the length of the block just processed.
                     // Thus, skipping over the columns that are part of this activity.
                     col += blockLen;
                 }
@@ -93,7 +93,8 @@ namespace App
             };
         }
 
-        // value of the first POS column in the block
+        // value of the first POS column in the block (representing HOLD.AKT)
+        // used to update POS in the HOLD table
         private string GetStartPosValue(Block group, List<int> posIndices, int col)
         {
             object val = group.Rows[0][posIndices[col]];
