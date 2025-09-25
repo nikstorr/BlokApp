@@ -62,6 +62,16 @@ namespace App
             return result;
         }
 
+        public static int GetFirstPOSIdx(DataTable table)
+        {
+            var columnHeaders = table.Rows[0].ItemArray
+                .Where(item => item != null && item.ToString() != string.Empty)
+                .Select(x => x.ToString())
+                .ToList();
+
+            return columnHeaders.FindIndex(h => h.Contains("POS", StringComparison.OrdinalIgnoreCase));
+        }
+
         /// <summary>
         /// Convert from domain object to DataTable for easy saving to Excel.
         /// </summary>

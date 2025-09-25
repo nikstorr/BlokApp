@@ -1,5 +1,4 @@
 ﻿using App.Domain;
-using App.IO;
 using System.Data;
 
 namespace App
@@ -9,39 +8,15 @@ namespace App
      */
     public class BlockHandler
     {
-        List<string> columnHeaders = [];
-        private readonly List<Activity> _activities = [];
-
-        List<Block> _blocks = new();
-        private readonly ActivityCreator _activityCreator;
-
-        // index of first POS column
-        private int _firstPosIdx = -1;
-
-        public BlockHandler(ActivityCreator activityCreator)
-        {
-            _activityCreator = activityCreator;
-        }
-
         public List<Block> GetBlocksToProcess(DataTable table)
         {
             var filteredRows = Util.RemoveEmptyBlokkeRows(table);
             return CreateActivityBlocks(filteredRows);
         }
 
-        public int GetFirstPOSIdx(DataTable table)
-        {
-            columnHeaders = table.Rows[0].ItemArray
-                .Where(item => item != null && item.ToString() != string.Empty)
-                .Select(x => x.ToString())
-                .ToList();
-
-            return columnHeaders.FindIndex(h => h.Contains("POS", StringComparison.OrdinalIgnoreCase));
-        }   
-
         /// <summary>
-        ///  Group a sequence of DataRow objects (from the BLOKKE table) into logical blocks, each represented by a Block object. 
-        ///  Each block corresponds to a set of rows that share the same (KLA, BLOK) key
+        ///  Group a sequence of DataRow objects (from the BLOKKE table) into logical blocks, each represented by 
+        ///  a Block object. Each block corresponds to a set of rows that share the same (KLA, BLOK) key
         /// </summary>
         private List<Block> CreateActivityBlocks(IEnumerable<DataRow> rows)
         {

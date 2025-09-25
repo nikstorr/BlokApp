@@ -1,7 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
 using App;
-using App.Domain;
 using App.IO;
 using System.Data;
 
@@ -11,8 +10,6 @@ string outputPath = "../../../../Files/Activities.xlsx";
 
 var excelReader = new ExcelReader(inputPath);
 var excelWriter = new ExcelWriter(outputPath);
-
-DataSet tableSet = excelReader.ReadExcelFile(inputPath);
 
 var runner = new Runner(excelReader, excelWriter);
 // ------

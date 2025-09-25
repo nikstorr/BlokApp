@@ -1,5 +1,4 @@
 ﻿using App;
-using NSubstitute;
 using System.Data;
 using Xunit;
 
@@ -7,13 +6,11 @@ namespace UnitTests
 {
     public class BlockHandlerShould
     {
-        private readonly ActivityCreator _activityCreatorSubstitute;
         private readonly BlockHandler _blockHandler;
 
         public BlockHandlerShould()
         {
-            _activityCreatorSubstitute = Substitute.For<ActivityCreator>((HoldHandler)null);
-            _blockHandler = new BlockHandler(_activityCreatorSubstitute);
+            _blockHandler = new BlockHandler();
         }
 
         [Fact]

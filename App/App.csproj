@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Requirements\" />
+    <Folder Include="Documents\" />
   </ItemGroup>
 
 </Project>

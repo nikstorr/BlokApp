@@ -27,7 +27,7 @@ namespace App.IO
             Workbook workbook = new Workbook();
 
             // Add a new worksheet
-            Worksheet sheet = workbook.Worksheets.Add("SalesReport");
+            Worksheet sheet = workbook.Worksheets.Add("Activities");
 
             // Import DataTable data into the worksheet
             sheet.InsertDataTable(dataTable, true, 1, 1);

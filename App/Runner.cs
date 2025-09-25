@@ -7,11 +7,11 @@ public class Runner
 {
     private readonly IExcelReader _excelReader;
     private readonly IExcelWriter _excelWriter;
+    private DataSet _tableSet = new();
 
     private DataTable _result = new();
     public DataTable Result => _result;
 
-    private DataSet _tableSet = new();
     private DataTable _holdTable = new();
     private DataTable _blokkeTable = new();
 
@@ -29,7 +29,7 @@ public class Runner
 
         var _holdHandler = new HoldHandler(_holdTable, _blokkeTable);
         _activityCreator = new ActivityCreator(_holdHandler);
-        _blockHandler = new BlockHandler(_activityCreator);
+        _blockHandler = new BlockHandler();
     }
 
     /// <summary>
@@ -38,10 +38,11 @@ public class Runner
     public void Run()
     {
         var blokke = _blockHandler.GetBlocksToProcess(_blokkeTable);
-        var fpi = _blockHandler.GetFirstPOSIdx(_blokkeTable);
+        var firstPOSIndex = Util.GetFirstPOSIdx(_blokkeTable);
+
         foreach (var block in blokke)
         {
-            var activities = _activityCreator.CreateActivitiesFromBlock(block, fpi);
+            var activities = _activityCreator.CreateActivitiesFromBlock(block, firstPOSIndex);
             foreach (var act in activities)
                 _activities.Add(act);
         }
