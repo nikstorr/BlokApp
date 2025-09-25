@@ -7,21 +7,17 @@ public class HoldHandler
 {
     public List<Hold> _hold = [];
     private readonly DataTable _holdTable;
-    private readonly DataTable _blokkeTable;
 
-    public HoldHandler(DataTable hold, DataTable blokke)
+    public HoldHandler(DataTable hold)
     {
         _holdTable = hold;
-        _blokkeTable = blokke;
 
         CreateHold();
     }
 
     private void CreateHold()
-    {
-        var filteredHOLD = Util.RemoveEmptyRows(_holdTable);
-
-        foreach (DataRow row in filteredHOLD.Skip(1)) // skip Header row
+    {       
+        foreach (DataRow row in FilterOutEmptyRows()) 
         {
             string kla = row[Constants.HOLD_KLA_idx]?.ToString() ?? "invalid";
             string akt = row[Constants.HOLD_AKT_idx]?.ToString() ?? "invalid";
@@ -40,14 +36,21 @@ public class HoldHandler
         }
     }
 
+    private IEnumerable<DataRow> FilterOutEmptyRows()
+    {
+        // Remove empty rows and skip the Header row.
+        // Which means that all unit tests must have a header row (to be skipped here)!
+        return Util.RemoveEmptyRows(_holdTable)
+            .Skip(1);
+    }   
+
     /// <summary>
-    /// each time an activity is created, the HOLD table must be updated:
-    /// the POS field must be decremented by 1 for the specific (KLA, AKT) row that matchs the Blok where,
-    /// action.KLA = HOLD.KLA && the actions's first pos index = HOLD.AKT
+    /// Decrement POS by 1 where:
+    /// (KLA, AKT) == the Blok where (action.KLA = HOLD.KLA && action's first pos index = HOLD.AKT)
     /// POS must never go below zero.
     public void UpdateHold(string actionKLA, string actionPOSValue)
     {
-        // TODO capture exceptions. Get better data or rewrite requirements
+        // TODO capture exceptions. And get better data or rewrite requirements
 
         var hold = _hold.FirstOrDefault(h => 
             h.KLA == actionKLA.Trim() &&

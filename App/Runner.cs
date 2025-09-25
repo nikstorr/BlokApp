@@ -27,7 +27,7 @@ public class Runner
 
         PopulateTables();
 
-        var _holdHandler = new HoldHandler(_holdTable, _blokkeTable);
+        var _holdHandler = new HoldHandler(_holdTable);
         _activityCreator = new ActivityCreator(_holdHandler);
         _blockHandler = new BlockHandler();
     }

@@ -12,12 +12,10 @@ namespace App
     public class ActivityCreator
     {
         HoldHandler _hold;
-        ActivityHelper _helper;
 
         public ActivityCreator(HoldHandler holdHandler)
         {
             _hold = holdHandler;
-            _helper = new ActivityHelper();
         }
 
         public List<Activity> CreateActivitiesFromBlock(Block block, int firstPOSIdx)
@@ -27,12 +25,12 @@ namespace App
 
             List<Activity> activities = [];
 
-            var posIndices = _helper.GetPosIndices(block, firstPOSIdx);
-            var posValues = _helper.GetPosValues(block, firstPOSIdx);
+            var posIndices = ActivityHelper.GetPosIndices(block, firstPOSIdx);
+            var posValues = ActivityHelper.GetPosValues(block, firstPOSIdx);
 
-            string perCiphers = _helper.GetPerCiphers(block);
-            string kla = _helper.GetKlaValue(block);
-            string blok = _helper.GetBlokValue(block);
+            string perCiphers = ActivityHelper.GetPerCiphers(block);
+            string kla = ActivityHelper.GetKlaValue(block);
+            string blok = ActivityHelper.GetBlokValue(block);
 
             // index to track how many PER ciphers have been used
             int perCipherIdx = 0;
@@ -47,10 +45,10 @@ namespace App
             while (col < posIndices.Count)
             {
                 // Find the largest contiguous block of matching POS columns starting at col
-                int blockLen = _helper.FindLargestMatchingBlock(posValues, col);
-                if (_helper.IsValidMultiColumnActivity(posValues, col, blockLen))
+                int blockLen = ActivityHelper.FindLargestMatchingBlock(posValues, col);
+                if (ActivityHelper.IsValidMultiColumnActivity(posValues, col, blockLen))
                 {
-                    string per = _helper.TakePerCiphers(ref perCipherIdx, blockLen, perCiphers);
+                    string per = ActivityHelper.TakePerCiphers(ref perCipherIdx, blockLen, perCiphers);
                     string aktNavn = useSimpleAktNavn ? blok : $"{blok} {col + 1}";
                     Activity activity = BuildActivity(kla, aktNavn, blockLen, per);
                     activities.Add(activity);
@@ -62,9 +60,9 @@ namespace App
                     // Thus, skipping over the columns that are part of this activity.
                     col += blockLen;
                 }
-                else if (_helper.IsSingleColumnActivity(posValues, col) && !_helper.IsColumnAllEmpty(posValues, col))
+                else if (ActivityHelper.IsSingleColumnActivity(posValues, col) && !ActivityHelper.IsColumnAllEmpty(posValues, col))
                 {
-                    string per = _helper.TakePerCiphers(ref perCipherIdx, 1, perCiphers);
+                    string per = ActivityHelper.TakePerCiphers(ref perCipherIdx, 1, perCiphers);
                     string aktNavn = useSimpleAktNavn ? blok : $"{blok} {col + 1}";
                     Activity activity = BuildActivity(kla, aktNavn, 1, per);
                     activities.Add(activity);
@@ -95,7 +93,7 @@ namespace App
 
         // value of the first POS column in the block (representing HOLD.AKT)
         // used to update POS in the HOLD table
-        private string GetStartPosValue(Block group, List<int> posIndices, int col)
+        private static string GetStartPosValue(Block group, List<int> posIndices, int col)
         {
             object val = group.Rows[0][posIndices[col]];
             return val == null ? "" : val.ToString();

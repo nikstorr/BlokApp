@@ -11,67 +11,88 @@ namespace App
         public List<Block> GetBlocksToProcess(DataTable table)
         {
             var filteredRows = Util.RemoveEmptyBlokkeRows(table);
-            return CreateActivityBlocks(filteredRows);
+
+            var builder = new BlockBuilder();
+            
+            foreach (var row in filteredRows)
+            {
+                builder.ProcessRow(row);
+            }
+            return builder.GetBlocks();
         }
 
-        /// <summary>
-        ///  Group a sequence of DataRow objects (from the BLOKKE table) into logical blocks, each represented by 
-        ///  a Block object. Each block corresponds to a set of rows that share the same (KLA, BLOK) key
-        /// </summary>
-        private List<Block> CreateActivityBlocks(IEnumerable<DataRow> rows)
+        // Helper class for Block building
+        private class BlockBuilder
         {
-            // TODO : This can probably be done more elegantly with LINQ GroupBy, or some such.
-            // either way, this method is too long and should be refactored.
+            private readonly List<Block> _blocks = [];
+            private Block _currentBlock = null;
+            private (string kla, string blok) _lastKey = (null, null);
 
-            var blocks = new List<Block>();
-            Block currentBlock = null;
-            (string kla, string blok) lastKey = (null, null);
-
-            foreach (var row in rows)
+            public void ProcessRow(DataRow row)
             {
-                var kla = row[Constants.BLOKKE_KLA_idx]?.ToString();
-                var blok = row[Constants.BLOKKE_BLOK_idx]?.ToString();
+                var key = GetBlockKey(row);
+                if (IsHeaderRow(key))
+                    return;
 
-                var key = (kla, blok);
-                // skip header rows
-                if (key == ("KLA", "BLOK"))
-                    continue;
-
-                // If KLA is empty, add row to current group (if any), or create a new group if none exists
-                if (string.IsNullOrWhiteSpace(kla))
+                if (IsEmptyKla(row))
                 {
-                    if (currentBlock == null)
-                    {
-                        currentBlock = new Block { Key = key, Rows = new List<DataRow>() };
-                        lastKey = key;
-                    }
-                    currentBlock.Rows.Add(row);
-                    continue;
+                    AddRowToCurrentOrNewBlock(key, row);
+                    return;
                 }
 
-                if (lastKey.kla == null && lastKey.blok == null)
+                if (IsNewBlock())
                 {
-                    currentBlock = new Block { Key = key, Rows = new List<DataRow>() };
-                    currentBlock.Rows.Add(row);
-                    lastKey = key;
+                    StartNewBlock(key, row);
                 }
-                else if (key == lastKey)
+                else if (key == _lastKey)
                 {
-                    currentBlock.Rows.Add(row);
+                    _currentBlock.Rows.Add(row);
                 }
                 else
                 {
-                    if (currentBlock != null && currentBlock.Rows.Count > 0)
-                        blocks.Add(currentBlock);
-                    currentBlock = new Block { Key = key, Rows = new List<DataRow>() };
-                    currentBlock.Rows.Add(row);
-                    lastKey = key;
+                    AddBlockIfNotEmpty();
+                    StartNewBlock(key, row);
                 }
             }
-            if (currentBlock != null && currentBlock.Rows.Count > 0)
-                blocks.Add(currentBlock);
 
-            return blocks;
+            public List<Block> GetBlocks()
+            {
+                AddBlockIfNotEmpty();
+                return _blocks;
+            }
+
+            private (string kla, string blok) GetBlockKey(DataRow row)
+            {
+                var kla = row[Constants.BLOKKE_KLA_idx]?.ToString();
+                var blok = row[Constants.BLOKKE_BLOK_idx]?.ToString();
+                return (kla, blok);
+            }
+
+            private bool IsHeaderRow((string kla, string blok) key) => key == ("KLA", "BLOK");
+            private bool IsEmptyKla(DataRow row) => string.IsNullOrWhiteSpace(row[Constants.BLOKKE_KLA_idx]?.ToString());
+            private bool IsNewBlock() => _lastKey.kla == null && _lastKey.blok == null;
+
+            private void StartNewBlock((string kla, string blok) key, DataRow row)
+            {
+                _currentBlock = new Block { Key = key, Rows = new List<DataRow> { row } };
+                _lastKey = key;
+            }
+
+            private void AddRowToCurrentOrNewBlock((string kla, string blok) key, DataRow row)
+            {
+                if (_currentBlock == null)
+                {
+                    _currentBlock = new Block { Key = key, Rows = new List<DataRow>() };
+                    _lastKey = key;
+                }
+                _currentBlock.Rows.Add(row);
+            }
+
+            private void AddBlockIfNotEmpty()
+            {
+                if (_currentBlock != null && _currentBlock.Rows.Count > 0)
+                    _blocks.Add(_currentBlock);
+            }
         }
     }
 }
